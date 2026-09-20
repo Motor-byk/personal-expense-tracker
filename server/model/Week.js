@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Scheme;
+import mongoose from "mongoose";
+
+const Schema = mongoose.Schema;
 
 const expenseSchema = new Schema({
     amount: {type: Number, required: true, min: 0},
@@ -24,4 +25,5 @@ weekSchema.index({ userId: 1, weekStart: -1 }, { unique: true });
 
 weekSchema.virtual('remaining').get(function () { /* ... */ });
 
-export default mongoose.model("Week", weekSchema);
+const Week = mongoose.model("Week", weekSchema)
+export default Week;

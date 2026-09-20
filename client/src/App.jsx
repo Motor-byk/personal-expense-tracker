@@ -2,10 +2,11 @@ import Topbar from "./components/Topbar";
 import WeeklyExpenses from "./components/WeeklyExpenses";
 import Bottominput from "./components/Bottominput";
 import { toStringCents } from "./util/expenseCalc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
     //temp
+    const USER = "6aadc94acca0ce64fec2f354"
     const tempweeklyexpense = [
                                 {name: "Costco Hotdog", cost: 150},
                                 {name: "$20 dollar bill", cost: 2000},
@@ -17,7 +18,15 @@ function App() {
     const [expenses, setExpenses] = useState(tempweeklyexpense);
     const currentBalance = startingBalance - expenses.reduce((totalExpense, expense) => totalExpense + expense.cost, 0)
     
-    
+    useEffect(() => {
+        console.log(USER);
+        fetch(`http://localhost:3000/api/users/${USER}`)
+            .then(response => response.json())
+            .then((data) => console.log(data))
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+            });
+    },[USER]);
     
     
 
