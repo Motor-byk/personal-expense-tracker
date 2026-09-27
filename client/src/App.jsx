@@ -2,6 +2,7 @@ import Topbar from "./components/Topbar";
 import WeeklyExpenses from "./components/WeeklyExpenses";
 import Bottominput from "./components/Bottominput";
 import AuthForm from "./components/AuthForm";
+import Settings from "./components/Settings";
 import { toStringCents } from "./util/expenseCalc";
 import { useState, useEffect } from "react";
 
@@ -21,6 +22,7 @@ function App() {
     const [expanded, setExpanded] = useState(false);
     const [week, setWeek] = useState(null);
     const [weekError, setWeekError] = useState("");
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     useEffect(() => {
         fetch("/api/auth/me")
@@ -47,6 +49,18 @@ function App() {
         setWeek(null);
         setWeekError("");
         setExpanded(false);
+        setSettingsOpen(false);
+    }
+
+    async function handleSaveSettings(weeklyAllowance) {
+        const data = await requestWeek("/api/settings", {
+            method: "PATCH",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({weeklyAllowance}),
+        });
+        setUser(data.user);
+        setWeek(data.week);
+        setSettingsOpen(false);
     }
 
     async function handleAddExpense(itemName, amount) {
@@ -88,7 +102,7 @@ function App() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Topbar reserve={1000} weekStart={week.weekStart} onLogout={handleLogout} />
+            <Topbar reserve={1000} weekStart={week.weekStart} onLogout={handleLogout} onOpenSettings={() => setSettingsOpen(true)} />
             <main className="grow m-4">
                 <h2 className="text-2xl font-bold">Weekly Balance</h2>
                 {
@@ -103,6 +117,7 @@ function App() {
                 </div>
             </main>
             <Bottominput onAdd={handleAddExpense}/>
+            {settingsOpen && <Settings user={user} onSave={handleSaveSettings} onClose={() => setSettingsOpen(false)}/>}
         </div>
     );
 }

@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./configuration/connection.js";
 import authRouter from "./routes/auth.js";
 import weekRouter from "./routes/week.js";
+import settingsRouter from "./routes/settings.js";
 import requireAuth from "./middleware/requireAuth.js";
 
 dotenv.config({path:"./config.env"});
@@ -35,6 +36,9 @@ app.use("/api/auth", authRouter);
 
 //week
 app.use("/api/week", requireAuth, weekRouter);
+
+//settings
+app.use("/api/settings", requireAuth, settingsRouter);
 
 // unknown api routes shouldn't fall through to the react app
 app.use("/api", (req, res) => {
