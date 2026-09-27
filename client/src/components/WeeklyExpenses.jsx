@@ -14,9 +14,9 @@ export default function WeeklyExpenses({expenses = [], startingBalance = 0}){
                                 <span className="">{expense.name}</span>
                             </li>
                 })}
-                <hr class="border-t border-gray-300 my-2" />
+                <hr className="border-t border-gray-300 my-2" />
                 <li className="flex justify-between">
-                    <span class="underline font-semibold text-red-800">{toStringCents(expenses.reduce((total, cur) => total + cur.cost, 0))}</span>
+                    <span className="underline font-semibold text-red-800">{toStringCents(expenses.reduce((total, cur) => total + cur.cost, 0))}</span>
                     <span>Total Spent</span>
                 </li>
             </ul>

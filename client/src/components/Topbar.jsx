@@ -1,6 +1,6 @@
 
 
-export default function Topbar({reserve = 0}){
+export default function Topbar({reserve = 0, onLogout}){
 
 
     return(
@@ -9,6 +9,7 @@ export default function Topbar({reserve = 0}){
             <div className="flex gap-4 text-md">
                 <span>Current Reserve: <span>{`$${reserve}`}</span></span>
                 <span>September 14, 2026</span>
+                <button onClick={onLogout} className="underline">Logout</button>
             </div>
         </nav>
     );

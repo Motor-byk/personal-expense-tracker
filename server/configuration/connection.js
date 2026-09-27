@@ -7,5 +7,6 @@ export default async function connectDB(){
         });
     } catch(err){
         console.error(err)
+        process.exit(1);
     }
 }

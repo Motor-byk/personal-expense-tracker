@@ -1,42 +1,55 @@
 import Topbar from "./components/Topbar";
 import WeeklyExpenses from "./components/WeeklyExpenses";
 import Bottominput from "./components/Bottominput";
+import AuthForm from "./components/AuthForm";
 import { toStringCents } from "./util/expenseCalc";
 import { useState, useEffect } from "react";
 
 function App() {
     //temp
-    const USER = "6aadc94acca0ce64fec2f354"
     const tempweeklyexpense = [
                                 {name: "Costco Hotdog", cost: 150},
                                 {name: "$20 dollar bill", cost: 2000},
                                 {name: "Monster Energy", cost: 375}];
     const data = {startingBalance : 10000}
 
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [startingBalance] = useState(data.startingBalance);
     const [expenses, setExpenses] = useState(tempweeklyexpense);
     const currentBalance = startingBalance - expenses.reduce((totalExpense, expense) => totalExpense + expense.cost, 0)
     
     useEffect(() => {
-        console.log(USER);
-        fetch(`http://localhost:3000/api/users/${USER}`)
-            .then(response => response.json())
-            .then((data) => console.log(data))
+        fetch("/api/auth/me")
+            .then(response => response.ok ? response.json() : null)
+            .then((data) => setUser(data))
             .catch(error => {
                 console.error('Error fetching user data:', error);
-            });
-    },[USER]);
-    
-    
+            })
+            .finally(() => setAuthChecked(true));
+    },[]);
+
+    async function handleLogout() {
+        await fetch("/api/auth/logout", {method: "POST"});
+        setUser(null);
+    }
 
     function handleExpand() {
         setExpanded(!expanded);
     }
 
+    if (!authChecked) {
+        return null;
+    }
+
+    if (!user) {
+        return <AuthForm onAuth={setUser} />;
+    }
+
     return (
         <div className="flex flex-col min-h-screen">
-            <Topbar reserve={1000} />
+            <Topbar reserve={1000} onLogout={handleLogout} />
             <main className="grow m-4">
                 <h2 className="text-2xl font-bold">Weekly Balance</h2>
                 {
