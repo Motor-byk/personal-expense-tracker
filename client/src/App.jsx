@@ -5,21 +5,23 @@ import AuthForm from "./components/AuthForm";
 import { toStringCents } from "./util/expenseCalc";
 import { useState, useEffect } from "react";
 
-function App() {
-    //temp
-    const tempweeklyexpense = [
-                                {name: "Costco Hotdog", cost: 150},
-                                {name: "$20 dollar bill", cost: 2000},
-                                {name: "Monster Energy", cost: 375}];
-    const data = {startingBalance : 10000}
+// throws the server's error message so callers can show it
+async function requestWeek(url, options) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.message ?? "Something went wrong");
+    }
+    return data;
+}
 
+function App() {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
     const [expanded, setExpanded] = useState(false);
-    const [startingBalance] = useState(data.startingBalance);
-    const [expenses, setExpenses] = useState(tempweeklyexpense);
-    const currentBalance = startingBalance - expenses.reduce((totalExpense, expense) => totalExpense + expense.cost, 0)
-    
+    const [week, setWeek] = useState(null);
+    const [weekError, setWeekError] = useState("");
+
     useEffect(() => {
         fetch("/api/auth/me")
             .then(response => response.ok ? response.json() : null)
@@ -30,9 +32,39 @@ function App() {
             .finally(() => setAuthChecked(true));
     },[]);
 
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+        requestWeek("/api/week/current")
+            .then((data) => setWeek(data))
+            .catch((error) => setWeekError(error.message));
+    }, [user]);
+
     async function handleLogout() {
         await fetch("/api/auth/logout", {method: "POST"});
         setUser(null);
+        setWeek(null);
+        setWeekError("");
+        setExpanded(false);
+    }
+
+    async function handleAddExpense(itemName, amount) {
+        const data = await requestWeek("/api/week/current/expenses", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({itemName, amount}),
+        });
+        setWeek(data);
+    }
+
+    async function handleDeleteExpense(expenseId) {
+        try {
+            const data = await requestWeek(`/api/week/${week._id}/expenses/${expenseId}`, {method: "DELETE"});
+            setWeek(data);
+        } catch (error) {
+            setWeekError(error.message);
+        }
     }
 
     function handleExpand() {
@@ -47,22 +79,30 @@ function App() {
         return <AuthForm onAuth={setUser} />;
     }
 
+    if (!week) {
+        return <p className="m-4">{weekError || "Loading..."}</p>;
+    }
+
+    const { expenses, startingBalance } = week;
+    const currentBalance = startingBalance - expenses.reduce((totalExpense, expense) => totalExpense + expense.amount, 0)
+
     return (
         <div className="flex flex-col min-h-screen">
-            <Topbar reserve={1000} onLogout={handleLogout} />
+            <Topbar reserve={1000} weekStart={week.weekStart} onLogout={handleLogout} />
             <main className="grow m-4">
                 <h2 className="text-2xl font-bold">Weekly Balance</h2>
                 {
-                    currentBalance > 0 ? 
+                    currentBalance >= 0 ?
                     <h3 className="text-xl font-bold text-green-800">{toStringCents(currentBalance)}</h3> :
                     <h3 className="text-xl font-bold text-red-800">-{toStringCents(currentBalance * -1)}</h3> // kinda goofy solution im sorry future me );
                 }
+                {weekError && <p className="text-red-700 text-sm">{weekError}</p>}
                 <div>
                     <button onClick={handleExpand} className="text-sm text-blue-950 underline italic">Expand</button>
-                    {expanded && <WeeklyExpenses expenses={expenses} startingBalance={startingBalance}/>}
+                    {expanded && <WeeklyExpenses expenses={expenses} startingBalance={startingBalance} onDelete={handleDeleteExpense}/>}
                 </div>
             </main>
-            <Bottominput setExpenses={setExpenses}/>
+            <Bottominput onAdd={handleAddExpense}/>
         </div>
     );
 }

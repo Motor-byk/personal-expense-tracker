@@ -5,8 +5,8 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./configuration/connection.js";
-import Week from "./model/Week.js";
 import authRouter from "./routes/auth.js";
+import weekRouter from "./routes/week.js";
 import requireAuth from "./middleware/requireAuth.js";
 
 dotenv.config({path:"./config.env"});
@@ -34,36 +34,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRouter);
 
 //week
-app.get("/api/week/:weekStart", requireAuth, async (req,res) => {
-    try {
-        const week = await Week.findOne({userId: req.userId, weekKey: req.params.weekStart});
-        if (!week) {
-            return res.status(404).json({message: "Week not found"});
-        }
-
-        res.status(200).json(week);
-        console.log("Fetched week data");
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-
-// temp: creates a hardcoded week for the logged-in user
-app.post("/api/week", requireAuth, async (req,res) => {
-    try {
-        const week = await Week.create({
-            userId: req.userId,
-            weekStart: new Date(2026, 8, 14),
-            weekKey: "9-14-2026",
-            startingBalance: 10000,
-        })
-        res.status(201).json(week)
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ message: "Server error" });
-    }
-})
+app.use("/api/week", requireAuth, weekRouter);
 
 // unknown api routes shouldn't fall through to the react app
 app.use("/api", (req, res) => {
